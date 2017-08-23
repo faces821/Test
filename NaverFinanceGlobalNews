@@ -1,0 +1,29 @@
+import requests
+from bs4 import BeautifulSoup
+import csv 
+import datetime
+
+#날짜입력
+year = "2017" # 작업종류에 따라 변경
+month = "07" # 작업시기에 따라 변경
+day = input("날짜입력 일(dd):")
+week = ('월','화','수','목','금','토','일')
+print(year+"-"+month+"-"+day+" "+week[datetime.date(int(year),int(month),int(day)).weekday()]+"요일")
+url = "http://finance.naver.com/world/market_news_main.nhn?category=main&date=" + year + "-" + month + "-" + day
+r = requests.get(url)
+soup = BeautifulSoup(r.text, 'lxml')
+
+# 타이틀과 본문 각각 크롤링
+div_body = soup.find('div',{'id':'content'})
+titles = div_body.find_all('dt')[1:]
+paras = div_body.find_all('dd')
+
+for i in range(min([5,str(soup).count('<dt>')])):
+    print(titles[i].text.replace("\n", "").replace('\t', ''),paras[i].text.replace("\n", "").replace('\t', ''))
+    
+#csv 파일로 저장
+file = open('naverfinancenews_daily.csv', 'a', encoding='utf-8', newline='')
+wr = csv.writer(file)
+for i in range(min([5,str(soup).count('<dt>')])):
+    wr.writerow([year+"-"+month+"-"+day,i+1,titles[i].text.replace("\n", "").replace('\t', ''),paras[i].text.replace("\n", "").replace('\t', '')])
+file.close()
